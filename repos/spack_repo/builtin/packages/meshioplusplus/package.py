@@ -4,7 +4,16 @@
 
 from spack_repo.builtin.build_systems.cmake import CMakePackage
 
-from spack.package import *
+from spack.package import (
+    any_combination_of,
+    conditional,
+    conflicts,
+    depends_on,
+    license,
+    maintainers,
+    variant,
+    version,
+)
 
 
 class Meshioplusplus(CMakePackage):
@@ -24,7 +33,7 @@ class Meshioplusplus(CMakePackage):
     """
 
     homepage = "https://github.com/loumalouomega/meshioplusplus"
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v16.21.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v16.29.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -49,6 +58,11 @@ class Meshioplusplus(CMakePackage):
     # *tagged* release of each ABI -- which is why ABI 6 opens at v9.22.0
     # rather than the v9.20.0 that introduced mPatchTypes.
     #
+    # First tagged ABI 22 release (MDPA/Gmsh side-channel layout changes).
+    version("16.29.0", sha256="8dfa3564f5140adad895166ed7cb3e52e4654bf17dd4d88a24fce0c3abcba849")
+    # Tagged representatives of ABI 20 and 19; ABI 21 was never tagged.
+    version("16.27.0", sha256="7f0804742a172d91261307dc309b3977e2164d669cd3eb28034930efa3997b91")
+    version("16.25.0", sha256="a3c494814285f9b0a18d6f5568f8ee1810b66da3aad67ced0a11ef9221ca5288")
     # ABI 18 at v16.21.0 is additive only (write_vtu_appended and the appended
     # WriteEncoding::RawAppended enumerator).
     version("16.21.0", sha256="86bb461db6e01500aeaced5e8aee43a23d08c54eafc3e3b23c3fa6305b76907d")
@@ -134,12 +148,7 @@ class Meshioplusplus(CMakePackage):
     )
     variant("netcdf", default=True, description="C++ netCDF-backed format (Exodus)")
     variant("zlib", default=True, description="C++ VTU zlib compression path")
-    variant(
-        "zstd",
-        default=False,
-        description="C++ VTK XML zstd compression codec",
-        when="@7.3:",
-    )
+    variant("zstd", default=False, description="C++ VTK XML zstd compression codec", when="@7.3:")
     variant("lz4", default=False, description="C++ VTK XML lz4 compression codec", when="@7.3:")
     variant(
         "bzip2",
@@ -148,10 +157,7 @@ class Meshioplusplus(CMakePackage):
         when="@16.12:",
     )
     variant(
-        "kahip",
-        default=False,
-        description="KaHIP-backed mesh partitioning quality",
-        when="@7.6:",
+        "kahip", default=False, description="KaHIP-backed mesh partitioning quality", when="@7.6:"
     )
     variant(
         "cgnslib",
@@ -170,6 +176,12 @@ class Meshioplusplus(CMakePackage):
         default=False,
         description="Build the native meshioplusplus CLI binary",
         when="@7.0:",
+    )
+    variant(
+        "tecio",
+        default=False,
+        description="TecIO-backed .szplt reader (manual library download)",
+        when="@16.13:",
     )
     variant(
         "parallel",
@@ -218,9 +230,9 @@ class Meshioplusplus(CMakePackage):
     # Upstream hard-errors at configure time on
     # MESHIOPLUSPLUS_WITH_CGNSLIB without MESHIOPLUSPLUS_WITH_HDF5 -- the
     # cgnslib backend augments the hand-rolled HDF5 CGNS reader (it buys ADF
-    # containers and NGON_n/NFACE_n sections), it does not replace it. Depend
-    # on hdf5 here so that is a concretize-time constraint rather than a
-    # build-time abort. cgns~mpi keeps the closure serial: cgns defaults to
+    # containers and NGON_n/NFACE_n sections), it does not replace it. The
+    # +cgnslib~hdf5 conflict below enforces this before configure.
+    # cgns~mpi keeps the closure serial: cgns defaults to
     # +mpi, which would drag hdf5+mpi and an MPI into an otherwise serial
     # build. Its +hdf5 and +shared defaults are what we want, since upstream
     # links CGNS::cgns_shared.
@@ -230,6 +242,7 @@ class Meshioplusplus(CMakePackage):
     # component (the CXX component and target were renamed in 2.9) and opens
     # files with a serial adios2::ADIOS, so ~mpi is the matching choice.
     depends_on("adios2~mpi", when="+adios2")
+    depends_on("tecio~mpi", when="+tecio")
     # The TBB and (on libstdc++) the STL parallel backends need TBB.
     depends_on("tbb", when="parallel=tbb")
     depends_on("tbb", when="parallel=stl")
@@ -239,6 +252,7 @@ class Meshioplusplus(CMakePackage):
 
     # meshio++ requires a C++20 toolchain.
     conflicts("%gcc@:9", msg="meshio++ needs GCC >= 10 for C++20")
+    conflicts("+cgnslib", when="~hdf5", msg="The CGNS library backend requires +hdf5")
 
     def cmake_args(self):
         spec = self.spec
@@ -257,6 +271,7 @@ class Meshioplusplus(CMakePackage):
             self.define_from_variant("MESHIOPLUSPLUS_WITH_KAHIP", "kahip"),
             self.define_from_variant("MESHIOPLUSPLUS_WITH_CGNSLIB", "cgnslib"),
             self.define_from_variant("MESHIOPLUSPLUS_WITH_ADIOS2", "adios2"),
+            self.define_from_variant("MESHIOPLUSPLUS_WITH_TECIO", "tecio"),
             self.define_from_variant("MESHIOPLUSPLUS_BUILD_CLI", "cli"),
             # Eigen and Polyscope are vendored git submodules (an MED-transpose
             # optimization and the CLI's optional 3D viewer, respectively); the
@@ -264,16 +279,16 @@ class Meshioplusplus(CMakePackage):
             # and Polyscope (attached only to the CLI target) stays off.
             self.define("MESHIOPLUSPLUS_WITH_EIGEN", False),
             self.define(
-                "MESHIOPLUSPLUS_PARALLEL_BACKEND",
-                spec.variants["parallel"].value.upper(),
+                "MESHIOPLUSPLUS_PARALLEL_BACKEND", spec.variants["parallel"].value.upper()
             ),
             self.define(
-                "MESHIOPLUSPLUS_MESH_BACKEND",
-                spec.variants["mesh_backend"].value.upper(),
+                "MESHIOPLUSPLUS_MESH_BACKEND", spec.variants["mesh_backend"].value.upper()
             ),
             self.define_from_variant("MESHIOPLUSPLUS_INSTALL_CPP", "cxx_api"),
         ]
         if spec.satisfies("+cxx_api"):
             backends = ";".join(sorted(v.upper() for v in spec.variants["cxx_api_backends"].value))
             args.append(self.define("MESHIOPLUSPLUS_INSTALL_CPP_BACKENDS", backends))
+        if spec.satisfies("+tecio"):
+            args.append(self.define("TECIO_ROOT", spec["tecio"].prefix))
         return args

@@ -4,7 +4,7 @@
 
 from spack_repo.builtin.build_systems.python import PythonPackage
 
-from spack.package import *
+from spack.package import conflicts, depends_on, license, maintainers, variant, version
 
 
 class PyMeshioplusplus(PythonPackage):
@@ -15,7 +15,7 @@ class PyMeshioplusplus(PythonPackage):
     homepage = "https://github.com/loumalouomega/meshioplusplus"
     # 6.0.0 has no PyPI sdist, so build every version from the GitHub archive
     # (scikit-build-core builds fine from the source tree) for a uniform source.
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v16.21.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v16.29.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -34,6 +34,11 @@ class PyMeshioplusplus(PythonPackage):
     # floor, numpy/rich requirements and scikit-build-core/pybind11 build
     # requirements are unchanged across this whole range, so the dependency
     # block below is identical for every version listed.
+    # First tagged ABI 22 release (MDPA/Gmsh side-channel layout changes).
+    version("16.29.0", sha256="8dfa3564f5140adad895166ed7cb3e52e4654bf17dd4d88a24fce0c3abcba849")
+    # Tagged representatives of ABI 20 and 19; ABI 21 was never tagged.
+    version("16.27.0", sha256="7f0804742a172d91261307dc309b3977e2164d669cd3eb28034930efa3997b91")
+    version("16.25.0", sha256="a3c494814285f9b0a18d6f5568f8ee1810b66da3aad67ced0a11ef9221ca5288")
     version("16.21.0", sha256="86bb461db6e01500aeaced5e8aee43a23d08c54eafc3e3b23c3fa6305b76907d")
     version("16.16.0", sha256="3b58a8528ba6c10f612c870629ef7e5ede1ab5894235302f569b5270e8bb68bf")
     version("16.14.0", sha256="14fd42e97694be41cf01ed3c4bd3ab2a12d59e71e98f74ef12dd026429542963")
@@ -86,10 +91,21 @@ class PyMeshioplusplus(PythonPackage):
         when="@7.3:",
     )
     variant(
-        "kahip",
+        "kahip", default=False, description="KaHIP-backed mesh partitioning quality", when="@7.6:"
+    )
+
+    variant(
+        "bzip2", default=False, description="C++ native bzip2 path for libMesh", when="@16.12:"
+    )
+    variant(
+        "cgnslib",
         default=False,
-        description="KaHIP-backed mesh partitioning quality",
-        when="@7.6:",
+        description="Official CGNS library for ADF containers",
+        when="@9.22:",
+    )
+    variant("adios2", default=False, description="Native DOLFINx VTX (.bp) reader", when="@16.13:")
+    variant(
+        "tecio", default=False, description="TecIO .szplt reader (manual download)", when="@16.13:"
     )
 
     depends_on("c", type="build")
@@ -115,6 +131,11 @@ class PyMeshioplusplus(PythonPackage):
     depends_on("zstd", when="+zstd")
     depends_on("py-zstandard", when="+zstd", type="run")
     depends_on("lz4", when="+lz4")
+    depends_on("bzip2", when="+bzip2")
+    depends_on("hdf5", when="+cgnslib")
+    depends_on("cgns~mpi", when="+cgnslib")
+    depends_on("adios2~mpi", when="+adios2")
+    depends_on("tecio~mpi", when="+tecio")
     depends_on("py-lz4", when="+lz4", type="run")
     # KaHIP has no PyPI/Spack Python fallback package; +kahip only wires up
     # the native accelerator.
@@ -122,6 +143,7 @@ class PyMeshioplusplus(PythonPackage):
 
     # meshio++ requires a C++20 toolchain for the native core.
     conflicts("%gcc@:9", msg="meshio++ needs GCC >= 10 for C++20")
+    conflicts("+cgnslib", when="~hdf5", msg="The CGNS library backend requires +hdf5")
 
     def config_settings(self, spec, prefix):
         # scikit-build-core forwards these to the CMake configure. The pybind11
@@ -129,7 +151,7 @@ class PyMeshioplusplus(PythonPackage):
         def onoff(variant):
             return "ON" if spec.satisfies(variant) else "OFF"
 
-        return {
+        settings = {
             # hdf5's shared library reaches the link line only through
             # find_package(HDF5)'s imported target, so the directory CMake
             # resolved it from never makes it into Spack's seeded install
@@ -153,3 +175,13 @@ class PyMeshioplusplus(PythonPackage):
             "cmake.define.MESHIOPLUSPLUS_WITH_LZ4": onoff("+lz4"),
             "cmake.define.MESHIOPLUSPLUS_WITH_KAHIP": onoff("+kahip"),
         }
+        if spec.satisfies("@9.22:"):
+            settings["cmake.define.MESHIOPLUSPLUS_WITH_CGNSLIB"] = onoff("+cgnslib")
+        if spec.satisfies("@16.12:"):
+            settings["cmake.define.MESHIOPLUSPLUS_WITH_BZIP2"] = onoff("+bzip2")
+        if spec.satisfies("@16.13:"):
+            settings["cmake.define.MESHIOPLUSPLUS_WITH_ADIOS2"] = onoff("+adios2")
+            settings["cmake.define.MESHIOPLUSPLUS_WITH_TECIO"] = onoff("+tecio")
+            if spec.satisfies("+tecio"):
+                settings["cmake.define.TECIO_ROOT"] = str(spec["tecio"].prefix)
+        return settings
