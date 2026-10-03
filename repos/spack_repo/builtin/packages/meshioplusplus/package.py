@@ -33,7 +33,7 @@ class Meshioplusplus(CMakePackage):
     """
 
     homepage = "https://github.com/loumalouomega/meshioplusplus"
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v16.29.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v16.30.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -58,6 +58,8 @@ class Meshioplusplus(CMakePackage):
     # *tagged* release of each ABI -- which is why ABI 6 opens at v9.22.0
     # rather than the v9.20.0 that introduced mPatchTypes.
     #
+    # Reader robustness and benchmark/fuzz infrastructure; ABI 22 unchanged.
+    version("16.30.0", sha256="e1a877140e2d5ade9398821af275fe80201e6c1913e21a0582a4d124abdbb9c7")
     # First tagged ABI 22 release (MDPA/Gmsh side-channel layout changes).
     version("16.29.0", sha256="8dfa3564f5140adad895166ed7cb3e52e4654bf17dd4d88a24fce0c3abcba849")
     # Tagged representatives of ABI 20 and 19; ABI 21 was never tagged.
