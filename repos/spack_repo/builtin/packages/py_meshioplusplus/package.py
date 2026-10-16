@@ -15,7 +15,7 @@ class PyMeshioplusplus(PythonPackage):
     homepage = "https://github.com/loumalouomega/meshioplusplus"
     # 6.0.0 has no PyPI sdist, so build every version from the GitHub archive
     # (scikit-build-core builds fine from the source tree) for a uniform source.
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v16.30.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.3.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -35,6 +35,13 @@ class PyMeshioplusplus(PythonPackage):
     # requirements are unchanged across this whole range, so the dependency
     # block below is identical for every version listed.
     # Reader robustness and benchmark/fuzz infrastructure; ABI 22 unchanged.
+    version("17.3.0", sha256="dbbc2766fb9908160ee809f56a0ee17017a96e503029607af4de1fa2d6ec3f84")
+    version("17.2.0", sha256="d945dc797680f0f05ddfc3128582af883f105262e6a5a6dde1fd0b0688e221a9")
+    version("17.0.0", sha256="ec7ce56639acbb857fed589d5b21a43d2c393265a0dda4d0f2124f7f5f224ca1")
+    version("16.42.0", sha256="0251a2a48369b43a9ae6dd1cf6d28ac4fa9e347e766a94549353e2d407ecc40d")
+    version("16.40.0", sha256="a63c81e1ab72cecbdc575676d4fa417700e87e6fdf9af32df19f42a82da6d501")
+    version("16.39.0", sha256="4399d7061c4485028aa1411f8b86718640dd35cadec2d44ed38354987365a937")
+    version("16.32.0", sha256="dd362a45e6d830f9a7c364378081f660e0e7168afad62e29cd55b1ea6989d2c0")
     version("16.30.0", sha256="e1a877140e2d5ade9398821af275fe80201e6c1913e21a0582a4d124abdbb9c7")
     # First tagged ABI 22 release (MDPA/Gmsh side-channel layout changes).
     version("16.29.0", sha256="8dfa3564f5140adad895166ed7cb3e52e4654bf17dd4d88a24fce0c3abcba849")
@@ -99,6 +106,13 @@ class PyMeshioplusplus(PythonPackage):
     variant(
         "bzip2", default=False, description="C++ native bzip2 path for libMesh", when="@16.12:"
     )
+    variant("lzma", default=False, description="C++ VTK XML lzma compression codec", when="@17.3:")
+    variant(
+        "occt",
+        default=False,
+        description="OpenCASCADE-backed fit_cad operation and STEP/IGES reading",
+        when="@16.41:",
+    )
     variant(
         "cgnslib",
         default=False,
@@ -134,6 +148,8 @@ class PyMeshioplusplus(PythonPackage):
     depends_on("py-zstandard", when="+zstd", type="run")
     depends_on("lz4", when="+lz4")
     depends_on("bzip2", when="+bzip2")
+    depends_on("xz", when="+lzma")
+    depends_on("opencascade@7.6:", when="+occt")
     depends_on("hdf5", when="+cgnslib")
     depends_on("cgns~mpi", when="+cgnslib")
     depends_on("adios2~mpi", when="+adios2")
@@ -186,4 +202,8 @@ class PyMeshioplusplus(PythonPackage):
             settings["cmake.define.MESHIOPLUSPLUS_WITH_TECIO"] = onoff("+tecio")
             if spec.satisfies("+tecio"):
                 settings["cmake.define.TECIO_ROOT"] = str(spec["tecio"].prefix)
+        if spec.satisfies("@16.41:"):
+            settings["cmake.define.MESHIOPLUSPLUS_WITH_OCCT"] = onoff("+occt")
+        if spec.satisfies("@17.3:"):
+            settings["cmake.define.MESHIOPLUSPLUS_WITH_LZMA"] = onoff("+lzma")
         return settings

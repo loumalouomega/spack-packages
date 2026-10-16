@@ -33,7 +33,7 @@ class Meshioplusplus(CMakePackage):
     """
 
     homepage = "https://github.com/loumalouomega/meshioplusplus"
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v16.30.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.3.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -58,6 +58,25 @@ class Meshioplusplus(CMakePackage):
     # *tagged* release of each ABI -- which is why ABI 6 opens at v9.22.0
     # rather than the v9.20.0 that introduced mPatchTypes.
     #
+    # v17.3.0 is the latest release and shares ABI 30 with v17.2.0.
+    version("17.3.0", sha256="dbbc2766fb9908160ee809f56a0ee17017a96e503029607af4de1fa2d6ec3f84")
+    # ABI 29 -> 30: FitCadResult gained the vertex-blend, chamfer, conic-blend and
+    # tapered/variable-pitch thread counts (the C API reports them through the new
+    # mio_fit_cad_report_ex).
+    version("17.2.0", sha256="d945dc797680f0f05ddfc3128582af883f105262e6a5a6dde1fd0b0688e221a9")
+    # ABI 29: FitCadResult gained the variable-fillet, blend and rounded-thread
+    # counts in the untagged v16.44.0; v17.0.0 is a version-only major bump, so it
+    # is the first tagged ABI 29.
+    version("17.0.0", sha256="ec7ce56639acbb857fed589d5b21a43d2c393265a0dda4d0f2124f7f5f224ca1")
+    # ABI 26 -> 28: FitCadOptions and FitCadResult grew (ABI 27 was never tagged).
+    version("16.42.0", sha256="0251a2a48369b43a9ae6dd1cf6d28ac4fa9e347e766a94549353e2d407ecc40d")
+    # ABI 25 -> 26: CellType gained the Bezier types after Triangle7, so Custom
+    # moves from 77 to 84 (and MIO_CELL_Custom with it in the C API).
+    version("16.40.0", sha256="a63c81e1ab72cecbdc575676d4fa417700e87e6fdf9af32df19f42a82da6d501")
+    # ABI 24 -> 25: RenderOptions grew (ABI 24 was never tagged).
+    version("16.39.0", sha256="4399d7061c4485028aa1411f8b86718640dd35cadec2d44ed38354987365a937")
+    # First tagged ABI 23 release (additive terminal-rendering header).
+    version("16.32.0", sha256="dd362a45e6d830f9a7c364378081f660e0e7168afad62e29cd55b1ea6989d2c0")
     # Reader robustness and benchmark/fuzz infrastructure; ABI 22 unchanged.
     version("16.30.0", sha256="e1a877140e2d5ade9398821af275fe80201e6c1913e21a0582a4d124abdbb9c7")
     # First tagged ABI 22 release (MDPA/Gmsh side-channel layout changes).
@@ -152,11 +171,18 @@ class Meshioplusplus(CMakePackage):
     variant("zlib", default=True, description="C++ VTU zlib compression path")
     variant("zstd", default=False, description="C++ VTK XML zstd compression codec", when="@7.3:")
     variant("lz4", default=False, description="C++ VTK XML lz4 compression codec", when="@7.3:")
+    variant("lzma", default=False, description="C++ VTK XML lzma compression codec", when="@17.3:")
     variant(
         "bzip2",
         default=False,
         description="C++ native bzip2 path (libMesh .xda.bz2/.xdr.bz2 meshes)",
         when="@16.12:",
+    )
+    variant(
+        "occt",
+        default=False,
+        description="OpenCASCADE-backed fit_cad operation and STEP/IGES reading",
+        when="@16.41:",
     )
     variant(
         "kahip", default=False, description="KaHIP-backed mesh partitioning quality", when="@7.6:"
@@ -226,6 +252,8 @@ class Meshioplusplus(CMakePackage):
     depends_on("zlib-api", when="+zlib")
     depends_on("zstd", when="+zstd")
     depends_on("lz4", when="+lz4")
+    # CMake's own FindLibLZMA module (LibLZMA::LibLZMA).
+    depends_on("xz", when="+lzma")
     # CMake's own FindBZip2 module (BZip2::BZip2).
     depends_on("bzip2", when="+bzip2")
     depends_on("kahip", when="+kahip")
@@ -245,6 +273,9 @@ class Meshioplusplus(CMakePackage):
     # files with a serial adios2::ADIOS, so ~mpi is the matching choice.
     depends_on("adios2~mpi", when="+adios2")
     depends_on("tecio~mpi", when="+tecio")
+    # Upstream's floor is 7.6; it is found through OCCT's own CMake config and
+    # linked dynamically.
+    depends_on("opencascade@7.6:", when="+occt")
     # The TBB and (on libstdc++) the STL parallel backends need TBB.
     depends_on("tbb", when="parallel=tbb")
     depends_on("tbb", when="parallel=stl")
@@ -269,7 +300,9 @@ class Meshioplusplus(CMakePackage):
             self.define_from_variant("MESHIOPLUSPLUS_WITH_ZLIB", "zlib"),
             self.define_from_variant("MESHIOPLUSPLUS_WITH_ZSTD", "zstd"),
             self.define_from_variant("MESHIOPLUSPLUS_WITH_LZ4", "lz4"),
+            self.define_from_variant("MESHIOPLUSPLUS_WITH_LZMA", "lzma"),
             self.define_from_variant("MESHIOPLUSPLUS_WITH_BZIP2", "bzip2"),
+            self.define_from_variant("MESHIOPLUSPLUS_WITH_OCCT", "occt"),
             self.define_from_variant("MESHIOPLUSPLUS_WITH_KAHIP", "kahip"),
             self.define_from_variant("MESHIOPLUSPLUS_WITH_CGNSLIB", "cgnslib"),
             self.define_from_variant("MESHIOPLUSPLUS_WITH_ADIOS2", "adios2"),
