@@ -33,7 +33,7 @@ class Meshioplusplus(CMakePackage):
     """
 
     homepage = "https://github.com/loumalouomega/meshioplusplus"
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.3.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.9.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -58,7 +58,13 @@ class Meshioplusplus(CMakePackage):
     # *tagged* release of each ABI -- which is why ABI 6 opens at v9.22.0
     # rather than the v9.20.0 that introduced mPatchTypes.
     #
-    # v17.3.0 is the latest release and shares ABI 30 with v17.2.0.
+    # v17.9.0 is the latest release and the first tagged ABI 31.
+    version("17.9.0", sha256="7d10ca7946a817d5f85e8670ff96834533e3fb553df86464ecb0a178fa7697ff")
+    # ABI 30 -> 31: SegmentOptions gained the primitive-growth method and
+    # tolerance (96 -> 112 bytes); FitCadOptions gained merge_faces and backend
+    # and FitCadResult gained backend. The C structs kept their sizes.
+    # v17.3.0 shares ABI 30 with v17.2.0 (and v17.4.0 through v17.8.0, which
+    # are ABI-neutral against it and so need no separate line).
     version("17.3.0", sha256="dbbc2766fb9908160ee809f56a0ee17017a96e503029607af4de1fa2d6ec3f84")
     # ABI 29 -> 30: FitCadResult gained the vertex-blend, chamfer, conic-blend and
     # tapered/variable-pitch thread counts (the C API reports them through the new
