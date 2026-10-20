@@ -15,7 +15,7 @@ class PyMeshioplusplus(PythonPackage):
     homepage = "https://github.com/loumalouomega/meshioplusplus"
     # 6.0.0 has no PyPI sdist, so build every version from the GitHub archive
     # (scikit-build-core builds fine from the source tree) for a uniform source.
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.9.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.10.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -34,9 +34,12 @@ class PyMeshioplusplus(PythonPackage):
     # floor, numpy/rich requirements and scikit-build-core/pybind11 build
     # requirements are unchanged across this whole range, so the dependency
     # block below is identical for every version listed.
-    # v17.9.0 is the latest release and the first tagged ABI 31 (SegmentOptions
-    # grew; the C structs kept their sizes). v17.4.0 through v17.8.0 share
-    # ABI 30 with v17.3.0 and so need no separate line.
+    # v17.10.0 is the latest release and shares ABI 31 with v17.9.0 (the
+    # parametric primitives added a new header only, so the layouts are
+    # unchanged). v17.9.0 is the first tagged ABI 31 (SegmentOptions grew; the
+    # C structs kept their sizes). v17.4.0 through v17.8.0 share ABI 30 with
+    # v17.3.0 and so need no separate line.
+    version("17.10.0", sha256="102ac6dcfc6ea70665ca09f3d3e3df1876073fc7a72e00aae6cf9303d53f4815")
     version("17.9.0", sha256="7d10ca7946a817d5f85e8670ff96834533e3fb553df86464ecb0a178fa7697ff")
     # Reader robustness and benchmark/fuzz infrastructure; ABI 22 unchanged.
     version("17.3.0", sha256="dbbc2766fb9908160ee809f56a0ee17017a96e503029607af4de1fa2d6ec3f84")

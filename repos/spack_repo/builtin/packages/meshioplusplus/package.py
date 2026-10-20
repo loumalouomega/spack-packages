@@ -33,7 +33,7 @@ class Meshioplusplus(CMakePackage):
     """
 
     homepage = "https://github.com/loumalouomega/meshioplusplus"
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.9.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.10.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -58,7 +58,11 @@ class Meshioplusplus(CMakePackage):
     # *tagged* release of each ABI -- which is why ABI 6 opens at v9.22.0
     # rather than the v9.20.0 that introduced mPatchTypes.
     #
-    # v17.9.0 is the latest release and the first tagged ABI 31.
+    # v17.10.0 is the latest release and shares ABI 31 with v17.9.0: the
+    # parametric primitives added one new header (operations/primitives.hpp)
+    # and changed no existing declaration, so no consumer re-pin is needed.
+    version("17.10.0", sha256="102ac6dcfc6ea70665ca09f3d3e3df1876073fc7a72e00aae6cf9303d53f4815")
+    # v17.9.0 is the first tagged ABI 31.
     version("17.9.0", sha256="7d10ca7946a817d5f85e8670ff96834533e3fb553df86464ecb0a178fa7697ff")
     # ABI 30 -> 31: SegmentOptions gained the primitive-growth method and
     # tolerance (96 -> 112 bytes); FitCadOptions gained merge_faces and backend
