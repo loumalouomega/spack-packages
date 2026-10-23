@@ -15,7 +15,7 @@ class PyMeshioplusplus(PythonPackage):
     homepage = "https://github.com/loumalouomega/meshioplusplus"
     # 6.0.0 has no PyPI sdist, so build every version from the GitHub archive
     # (scikit-build-core builds fine from the source tree) for a uniform source.
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.10.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.13.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -31,14 +31,21 @@ class PyMeshioplusplus(PythonPackage):
     # listed here is binary-compatible with its neighbours. ABI 8 and 9
     # (v10.11.0, v10.12.0) were never tagged, hence the v10.6.0 -> v10.14.0
     # jump. The C API is not involved here at all -- pyproject.toml's Python
-    # floor, numpy/rich requirements and scikit-build-core/pybind11 build
-    # requirements are unchanged across this whole range, so the dependency
-    # block below is identical for every version listed.
-    # v17.10.0 is the latest release and shares ABI 31 with v17.9.0 (the
-    # parametric primitives added a new header only, so the layouts are
-    # unchanged). v17.9.0 is the first tagged ABI 31 (SegmentOptions grew; the
-    # C structs kept their sizes). v17.4.0 through v17.8.0 share ABI 30 with
-    # v17.3.0 and so need no separate line.
+    # floor, numpy/rich requirements and pybind11 build requirement are
+    # unchanged across this whole range; only scikit-build-core's floor moved
+    # to 0.11 at v17.11.0, which the dependency block below follows.
+    # v17.13.0 is the latest release and the first tagged ABI 33; it keeps 33
+    # (the new mesh_cad header is a pure addition). The ABI 33 break came in
+    # v17.12.0, which was never tagged (FitCadOptions grew from 224 to 288
+    # bytes and FitCadResult gained members; the C structs kept their sizes).
+    # v17.11.0 is the first tagged ABI 32 (FitCadOptions grew from 56 to 224
+    # bytes). v17.10.0 shares ABI 31 with v17.9.0 (the parametric primitives
+    # added a new header only, so the layouts are unchanged). v17.9.0 is the
+    # first tagged ABI 31 (SegmentOptions grew; the C structs kept their
+    # sizes). v17.4.0 through v17.8.0 share ABI 30 with v17.3.0 and so need no
+    # separate line.
+    version("17.13.0", sha256="4fa094ba3a2a0cf2d5579f5635377efe6f6b5f4437f884dc4e9a1a25d6f43a5a")
+    version("17.11.0", sha256="24ec1cf7b31be1602dc56b4deffbba4e3856d80c55f08e2423c6fef3580daf83")
     version("17.10.0", sha256="102ac6dcfc6ea70665ca09f3d3e3df1876073fc7a72e00aae6cf9303d53f4815")
     version("17.9.0", sha256="7d10ca7946a817d5f85e8670ff96834533e3fb553df86464ecb0a178fa7697ff")
     # Reader robustness and benchmark/fuzz infrastructure; ABI 22 unchanged.
@@ -138,7 +145,10 @@ class PyMeshioplusplus(PythonPackage):
     # / py-pathspec (needed to parse our PEP 621 pyproject.toml) when this
     # variant is set; without it, the concretizer can pick @0.8~pyproject and
     # the build fails at "Preparing metadata (pyproject.toml)".
-    depends_on("py-scikit-build-core@0.8: +pyproject", type="build")
+    depends_on("py-scikit-build-core@0.8: +pyproject", type="build", when="@:17.10")
+    # pyproject.toml's minimum-version moved to 0.11 at v17.11.0, when the
+    # PEP 639 licence metadata landed; older backends refuse to build it.
+    depends_on("py-scikit-build-core@0.11:", type="build", when="@17.11:")
     depends_on("py-pybind11@2.11:", type="build")
 
     depends_on("python@3.8:", type=("build", "link", "run"))

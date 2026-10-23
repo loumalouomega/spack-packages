@@ -33,7 +33,7 @@ class Meshioplusplus(CMakePackage):
     """
 
     homepage = "https://github.com/loumalouomega/meshioplusplus"
-    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.10.0.tar.gz"
+    url = "https://github.com/loumalouomega/meshioplusplus/archive/refs/tags/v17.13.0.tar.gz"
     git = "https://github.com/loumalouomega/meshioplusplus.git"
 
     maintainers("loumalouomega")
@@ -58,9 +58,17 @@ class Meshioplusplus(CMakePackage):
     # *tagged* release of each ABI -- which is why ABI 6 opens at v9.22.0
     # rather than the v9.20.0 that introduced mPatchTypes.
     #
-    # v17.10.0 is the latest release and shares ABI 31 with v17.9.0: the
-    # parametric primitives added one new header (operations/primitives.hpp)
-    # and changed no existing declaration, so no consumer re-pin is needed.
+    # v17.13.0 is the latest release and the first tagged ABI 33; it keeps 33
+    # (the new mesh_cad header is a pure addition). The ABI 33 break came in
+    # v17.12.0, which was never tagged: FitCadOptions grew from 224 to 288
+    # bytes and FitCadResult gained members (the C structs kept their sizes).
+    version("17.13.0", sha256="4fa094ba3a2a0cf2d5579f5635377efe6f6b5f4437f884dc4e9a1a25d6f43a5a")
+    # v17.11.0 is the first tagged ABI 32: FitCadOptions grew from 56 to 224
+    # bytes and FitCadResult gained members; the C structs kept their sizes.
+    version("17.11.0", sha256="24ec1cf7b31be1602dc56b4deffbba4e3856d80c55f08e2423c6fef3580daf83")
+    # v17.10.0 shares ABI 31 with v17.9.0: the parametric primitives added one
+    # new header (operations/primitives.hpp) and changed no existing
+    # declaration, so no consumer re-pin is needed.
     version("17.10.0", sha256="102ac6dcfc6ea70665ca09f3d3e3df1876073fc7a72e00aae6cf9303d53f4815")
     # v17.9.0 is the first tagged ABI 31.
     version("17.9.0", sha256="7d10ca7946a817d5f85e8670ff96834533e3fb553df86464ecb0a178fa7697ff")
